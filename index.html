@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAREE-UP - 이메일 로그인</title>
+    <!-- Tailwind CSS CDN -->
+    
+<style>
+ .job-preference-option{cursor:pointer;display:block;position:relative}.job-preference-option span{position:relative;display:flex;align-items:center;justify-content:center;min-height:48px;padding:.65rem 2.1rem .65rem .5rem;border:1px solid rgba(51,65,85,.9);border-radius:.65rem;background:rgba(15,23,42,.72);color:rgb(203 213 225);font-size:.75rem;font-weight:600;text-align:center;transition:all .18s ease}.job-preference-option:hover span{border-color:rgba(79,209,197,.45);color:white;background:rgba(30,41,59,.9)}.job-preference-option.is-selected span{border-color:#4FD1C5;background:rgba(79,209,197,.14);color:#4FD1C5;box-shadow:0 0 0 1px rgba(79,209,197,.16)}.job-preference-rank{position:absolute;right:.45rem;top:.4rem;width:1.35rem;height:1.35rem;border-radius:9999px;display:none;align-items:center;justify-content:center;background:#4FD1C5;color:#0B0F19;font-size:.65rem;font-weight:900;z-index:2}.job-preference-option.is-selected .job-preference-rank{display:flex}
+</style>
+<script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#0B0F19',
+                            panel: '#111827',
+                            card: '#1B2436',
+                            cardHover: '#232E44',
+                            accent: '#4FD1C5',
+                            accentHover: '#38B2AC',
+                            textMuted: '#94A3B8',
+                            border: '#2A364F'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #0B0F19;
+            color: #E2E8F0;
+        }
+        /* Custom scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2A364F;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4FD1C5;
+        }
+    </style>
+</head>
+<style>[hidden]{display:none!important} #login-screen{overflow-y:auto;align-items:flex-start} #login-screen > .relative{margin:auto} .auth-field{width:100%;background:#0f172a;border:1px solid #2A364F;border-radius:12px;padding:12px;color:#e2e8f0} .auth-field:focus{outline:2px solid #4FD1C5} .auth-label{display:block;font-size:14px;color:#cbd5e1;margin-bottom:6px}</style>
+<body class="min-h-screen bg-brand-bg flex flex-col justify-center items-center p-3 sm:p-6 lg:p-8 select-none">
+
+    <div id="app-shell" hidden class="w-full max-w-7xl bg-brand-panel border border-brand-border rounded-3xl p-5 sm:p-8 shadow-2xl space-y-6">
+        
+        <!-- Header Navigation Bar -->
+        <header class="flex flex-wrap justify-between items-center pb-4 border-b border-brand-border/60 gap-4">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchNavTab('dashboard')">
+                <span class="text-2xl font-black tracking-wider text-brand-accent flex items-center gap-2">
+                    <i data-lucide="door-stairwell" class="w-6 h-6 text-brand-accent"></i>
+                    CAREE-UP
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-4 text-sm font-medium">
+                <!-- Home Button requested next to user name -->
+                <button onclick="switchNavTab('dashboard')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-accent/15 border border-brand-accent/40 text-brand-accent hover:bg-brand-accent hover:text-slate-950 font-bold transition duration-200">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span>홈</span>
+                </button>
+
+                <span class="text-slate-300">
+                    <strong id="user-display-name" class="text-white font-semibold"></strong> 님
+                </span>
+                <span class="text-slate-600">/</span>
+                <button onclick="logout()" class="text-rose-400 hover:text-rose-300 transition-colors duration-200">
+                    로그아웃
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- VIEW 1: 홈 화면 (Dashboard - updated based on user sketch) -->
+            <div id="view-dashboard" class="lg:col-span-9 grid grid-cols-1 md:grid-cols-12 gap-5 bg-brand-card/40 p-5 rounded-2xl border border-brand-border/40">
+                
+                <!-- Left Column: 커리업 어드벤처 -->
+                <div class="md:col-span-7 bg-brand-card/80 p-5 sm:p-6 rounded-2xl border border-brand-border/80 flex flex-col shadow-lg">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-black text-white flex items-center gap-2">
+                                <i data-lucide="gamepad-2" class="w-5 h-5 text-brand-accent"></i>
+                                커리업 어드벤처
+                            </h2>
+                        </div>
+                    </div>
+
+                    <!-- 게임 화면처럼 사용하는 투명 내부 화면 -->
+                    <div class="relative flex flex-1 overflow-hidden rounded-2xl border border-brand-accent/25 bg-transparent">
+                        <div class="absolute inset-0 opacity-30 pointer-events-none" style="background-image:linear-gradient(rgba(79,209,197,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(79,209,197,.08) 1px,transparent 1px);background-size:28px 28px;"></div>
+                        <div class="relative flex flex-1 flex-col justify-between gap-5 p-4 sm:p-5 z-10">
+                            <div class="grid grid-cols-3 gap-2 text-center">
+                                <div class="p-2.5 rounded-xl bg-slate-950/35 border border-brand-border/40 backdrop-blur-sm">
+                                    <div class="text-[9px] text-slate-500">CLASS</div><div id="adventure-class" class="text-xs font-black text-white mt-1">BACKEND</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-slate-950/35 border border-brand-border/40 backdrop-blur-sm">
+                                    <div class="text-[9px] text-slate-500">QUEST</div><div id="adventure-quest-count" class="text-xs font-black text-brand-accent mt-1">0 / 4</div>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-slate-950/35 border border-brand-border/40 backdrop-blur-sm">
+                                    <div class="text-[9px] text-slate-500">D-DAY</div><div id="adventure-dDay" class="text-xs font-black text-white mt-1">D-117</div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-950/35 border border-brand-accent/30">
+                                <label for="adventure-spec-goal" class="block text-[10px] text-brand-accent font-bold mb-1">스펙업 목표</label>
+                                <input id="adventure-spec-goal" aria-label="스펙업 목표" oninput="saveSpecGoal(this.value)" class="w-full text-sm font-bold text-white bg-transparent focus:outline-none" placeholder="스펙업 목표를 한 줄로 적어주세요" />
+                            </div>
+                            <div class="flex items-center justify-center shrink-0">
+                                <div class="relative w-full aspect-[2/1] rounded-2xl border border-brand-accent/20 bg-slate-950/20 backdrop-blur-[2px] flex items-center justify-center overflow-hidden">
+                                    <img src="images/adventure.png" alt="커리업 어드벤처 — 검을 든 모험가의 픽셀 아트" class="block w-full h-full object-contain" style="display:block;width:100%;height:100%;object-fit:contain;" width="1774" height="887">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="p-3 rounded-xl bg-slate-950/35 border border-brand-border/40"><div class="text-[10px] text-slate-400">레벨</div><div id="adventure-level" class="text-lg font-black text-brand-accent mt-1">Lv. 1</div></div>
+                                <div class="p-3 rounded-xl bg-slate-950/35 border border-brand-border/40"><div class="text-[10px] text-slate-400">전직 단계</div><div id="adventure-job-stage" class="text-sm font-black text-amber-300 mt-1">전직 준비</div><div id="adventure-stage-count" class="text-[10px] text-slate-500 mt-1">중간목표 0 / 3</div></div>
+                            </div>
+                            <div class="space-y-2 shrink-0">
+                                <div class="flex items-center justify-between text-[10px]"><span class="text-sm text-slate-400">EXP</span><span id="adventure-progress-text" class="text-brand-accent font-bold">0%</span></div>
+                                <div class="w-full h-2 rounded-full bg-slate-900/70 border border-brand-border/40 overflow-hidden"><div id="adventure-progress" class="h-full bg-brand-accent rounded-full transition-all duration-300" style="width:0%"></div></div>
+                                <div class="flex justify-between items-center pt-1">
+                                    <span id="adventure-subtext" class="text-[10px] text-slate-500">첫 퀘스트를 완료하면 EXP를 획득합니다.</span>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: 오늘의 할 일 & 레벨업 목표 -->
+                <div class="md:col-span-5 flex flex-col space-y-5 justify-between">
+                    <!-- 오늘의 할 일 Card -->
+                    <div class="bg-brand-card/80 p-5 rounded-2xl border border-brand-border/80 space-y-4 shadow-lg flex-1 min-h-[330px]">
+                        <div class="flex items-center justify-between border-b border-brand-border/40 pb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="circle-question-mark" class="w-5 h-5 text-brand-accent"></i>오늘의 퀘스트</h3>
+                                <span id="home-todo-target" class="text-[10px] text-slate-500">셀프 커리큘럼 기반</span>
+                            </div>
+                            <button type="button" onclick="addHomeTodo()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-brand-accent hover:text-slate-950 text-brand-accent text-[10px] font-bold transition">+ 추가</button>
+                        </div>
+
+                        <!-- 항상 노출되는 미리 채운 첫 번째 할 일 -->
+                        <div id="home-todo-featured" class="p-3 rounded-xl bg-brand-accent/10 border border-brand-accent/30">
+                            <div class="flex items-start gap-2.5">
+                                <button type="button" onclick="toggleHomeTodo(this)" class="home-todo-check w-5 h-5 rounded border border-brand-accent bg-brand-accent/15 flex items-center justify-center shrink-0 mt-0.5"><i data-lucide="check" class="w-3 h-3 text-brand-accent"></i></button>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[9px] font-black text-brand-accent mb-1">TODAY'S MAIN QUEST</div>
+                                    <input id="home-todo-featured-input" value="SQLD 기출 1회 풀기" class="w-full bg-transparent border-0 p-0 text-xs font-bold text-white focus:outline-none focus:ring-0" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 나머지는 스크롤 가능한 편집형 투두리스트 -->
+                        <div id="home-todo-list" class="max-h-[190px] overflow-y-auto pr-1 space-y-2"></div>
+                    </div>
+
+                    <!-- 레벨업 목표 Card -->
+                    <div class="bg-brand-card/80 p-5 rounded-2xl border border-brand-border/80 space-y-4 shadow-lg flex-1 min-h-[230px]">
+                        <div class="flex items-center justify-between border-b border-brand-border/40 pb-3">
+                            <h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>스펙업 목표</h3>
+                            <span id="home-levelup-target" class="text-[11px] text-slate-400 font-medium">1~3단계</span>
+                        </div>
+                        <div class="p-3 rounded-xl bg-slate-900/60 border border-brand-accent/25 space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="flex items-center gap-2 text-xs font-bold text-white"><i data-lucide="award" class="w-4 h-4 text-brand-accent"></i><span id="home-levelup-goal">SQLD / 정보처리기사</span></span>
+                                <span id="home-levelup-progress-label" class="text-[10px] text-brand-accent font-bold">진행중</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden"><div id="home-levelup-progress" class="bg-brand-accent h-1.5 rounded-full transition-all duration-300" style="width:35%"></div></div>
+                            <p id="home-levelup-detail" class="text-[10px] leading-relaxed text-slate-400">백엔드 개발에 필요한 데이터베이스와 개발 기본기를 증명할 수 있는 자격증을 준비합니다.</p>
+                        </div>
+                        <div id="home-levelup-subgoals" class="grid grid-cols-1 gap-2 text-[10px]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: 마이페이지 (My Page Form & Preview View) -->
+            <div id="view-mypage" class="hidden lg:col-span-9 bg-brand-card/40 p-5 rounded-2xl border border-brand-border/40 space-y-5">
+                <div class="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-brand-border/30">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="user-round" class="w-5 h-5 text-brand-accent"></i>마이페이지</h2>
+                        <p class="text-xs text-slate-400 mt-1">직무 추천과 커리어 로드맵에 활용할 기본 정보를 입력해 주세요.</p>
+                    </div>
+                    <button id="mypage-save" disabled onclick="saveMyPageInfo()" class="disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-bold rounded-lg text-xs transition flex items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i><span id="mypage-save-label">저장하기</span></button>
+                </div>
+                <div class="flex items-center gap-3"><p id="mypage-status" role="status" aria-live="polite" class="text-xs text-slate-400">로그인 후 회원정보를 불러옵니다.</p><button id="mypage-retry" type="button" hidden onclick="retryMyPageLoad()" class="text-xs text-brand-accent underline">다시 불러오기</button></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div class="p-4 bg-brand-card/70 rounded-xl border border-brand-border space-y-2">
+                        <label for="input-grade" class="text-sm font-bold text-white">학년</label>
+                        <select id="input-grade" class="w-full px-3 py-2.5 bg-slate-900 border border-brand-border rounded-lg text-sm text-white focus:outline-none focus:border-brand-accent">
+                            <option value="" selected>학년을 선택하세요</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option>
+                        </select>
+                    </div>
+                    <div class="p-4 bg-brand-card/70 rounded-xl border border-brand-border space-y-2">
+                        <label for="input-gpa" class="text-sm font-bold text-white">GPA (4.5 만점)</label>
+                        <input id="input-gpa" type="number" min="0" max="4.5" step="any" placeholder="예: 3.8" class="w-full px-3 py-2.5 bg-slate-900 border border-brand-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-accent">
+                    </div>
+                    <div class="p-4 bg-brand-card/70 rounded-xl border border-brand-border space-y-2">
+                        <label for="input-stack" class="text-sm font-bold text-white">보유 기술 스택</label>
+                        <input id="input-stack" type="text" placeholder="예: Java, Python, Spring Boot, SQL" class="w-full px-3 py-2.5 bg-slate-900 border border-brand-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-accent">
+                    </div>
+                    <div class="p-4 bg-brand-card/70 rounded-xl border border-brand-border space-y-2">
+                        <label for="input-certificates" class="text-sm font-bold text-white">보유 자격증</label>
+                        <input id="input-certificates" type="text" placeholder="예: 정보처리기사, SQLD" class="w-full px-3 py-2.5 bg-slate-900 border border-brand-border rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-accent">
+                    </div>
+                    <div class="md:col-span-2 p-4 bg-brand-card/70 rounded-xl border border-brand-border space-y-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div><label class="text-sm font-bold text-white">선호 직무</label><p class="text-[11px] text-slate-500 mt-1">관심 직무를 최대 3개까지 선택해 1~3순위를 정할 수 있습니다.</p></div>
+                            <button onclick="startPreferenceTI()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-brand-accent/40 text-brand-accent font-bold rounded-lg text-xs transition flex items-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4"></i>선호직무TI 검사하기</button>
+                        </div>
+                        <div id="job-preference-options" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="FE" class="sr-only peer"><span>프론트엔드개발<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="BE" class="sr-only peer"><span>백엔드/서버개발<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="APP" class="sr-only peer"><span>ios/android앱개발<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="ERP" class="sr-only peer"><span>시스템/ERP개발<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="OPS" class="sr-only peer"><span>DevOps/클라우드<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="SEC" class="sr-only peer"><span>정보보안<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="DATA" class="sr-only peer"><span>데이터/DB<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="AIML" class="sr-only peer"><span>AI/ML엔지니어<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="QA" class="sr-only peer"><span>QA/기술지원<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="GAME" class="sr-only peer"><span>게임개발/기획<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="IOT" class="sr-only peer"><span>임베디드/IoT시스템<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="NET" class="sr-only peer"><span>네트워크엔지니어<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+<label class="job-preference-option"><input disabled type="checkbox" name="preferred-job" value="ETC" class="sr-only peer"><span>기타직무<b class="job-preference-rank" aria-hidden="true"></b></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-900/60 border border-brand-border/60"><p class="text-xs text-slate-400 flex items-start gap-2"><i data-lucide="info" class="w-4 h-4 text-brand-accent shrink-0"></i>입력한 정보는 직무 추천, 매칭점수 리포트, 커리어 로드맵을 개인화하는 데 활용됩니다.</p></div>
+            </div>
+
+            <!-- VIEW 3: 직무 추천 통합 화면 -->
+            <div id="view-recommendation" class="hidden lg:col-span-9 bg-brand-card/40 p-5 rounded-2xl border border-brand-border/40 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-brand-border/30">
+                    <div><h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="wand-2" class="w-5 h-5 text-brand-accent"></i>직무 추천</h2><p class="text-xs text-slate-400 mt-1">채용공고 추천 결과와 고정 리포트를 확인하세요.</p></div>
+                    <div class="flex items-center gap-1.5 text-xs"><button id="rec-btn-all" onclick="selectFilterTab('all')" class="px-3.5 py-1.5 rounded-lg bg-brand-accent text-slate-950 font-bold">전체</button><button id="rec-btn-detail" onclick="selectFilterTab('detail')" class="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300">상세</button><button onclick="toggleFilterModal()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 text-brand-accent border border-brand-accent/30">필터 <i data-lucide="chevron-down" class="w-3.5 h-3.5 inline"></i></button></div>
+                </div>
+                <section class="relative p-5 rounded-2xl bg-slate-900/80 border border-brand-accent/50 shadow-lg"><div class="absolute -top-3 left-4 flex items-center gap-1 px-3 py-1 bg-brand-accent text-slate-950 rounded-full text-[11px] font-black"><i data-lucide="pin" class="w-3 h-3"></i>고정 리포트</div><div class="flex flex-wrap justify-between gap-3 mb-4 pt-1"><div><h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="file-bar-chart-2" class="w-5 h-5 text-brand-accent"></i>고정한 매칭점수 리포트</h3><p class="text-xs text-slate-400 mt-1">현재 메인화면에 고정한 분석 결과입니다.</p></div><span class="text-xs px-2.5 py-1 bg-brand-accent/20 border border-brand-accent/40 text-brand-accent rounded-full font-semibold">타겟 공고: 카카오 백엔드</span></div><div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center"><div class="flex justify-center"><div class="relative w-28 h-28 flex items-center justify-center"><svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36"><path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/><path class="text-brand-accent" stroke-dasharray="88, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/></svg><div class="absolute flex flex-col items-center"><span class="text-2xl font-black text-white">88<span class="text-xs text-brand-accent">점</span></span><span class="text-[9px] text-slate-400">100점 만점</span></div></div></div><div class="sm:col-span-2 space-y-2 text-xs"><p class="text-slate-300 leading-relaxed">공고와 당신의 매칭 점수는 <strong class="text-brand-accent text-base">88점</strong>으로, <span class="text-slate-200">Python/Java 관련 백엔드 핵심 역량</span>과 <span class="text-slate-200">데이터베이스 과목 이수</span>가 높은 평가를 받았습니다.</p><div class="p-3 bg-slate-950/50 rounded-xl border border-brand-border/50"><div class="font-bold text-slate-200 mb-1">AI 분석 총평</div><p class="text-slate-400 leading-relaxed">Spring Boot 실전 프로젝트와 AWS 배포 경험을 보완하면 좋습니다.</p></div></div></div></section>
+                <button onclick="startNewRecommendation()" class="w-full py-3.5 bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-black rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"><i data-lucide="sparkles" class="w-4 h-4"></i>직무추천 새로받기</button>
+                <section id="latest-recommendation-results" class="space-y-4 pt-1">
+<div class="flex items-center justify-between pb-2 border-b border-brand-border/30">
+<h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="list-checks" class="w-5 h-5 text-brand-accent"></i>최신 추천 결과</h3>
+<span class="text-[11px] text-slate-500">공고를 클릭하면 상세 내용을 확인할 수 있습니다.</span>
+</div>
+
+<div class="recommendation-card rounded-xl bg-brand-card/70 border border-brand-border overflow-hidden">
+<button type="button" class="w-full p-4 text-left hover:bg-brand-cardHover transition" onclick="toggleRecommendationCard('rec-kakao')">
+<div class="flex justify-between items-center gap-2"><h4 class="text-base font-bold text-white">카카오 - 백엔드 개발자</h4><div class="flex items-center gap-2"><span class="text-xs text-brand-accent font-bold">조건 부합 88%</span><i id="rec-kakao-icon" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i></div></div>
+<p class="text-xs text-slate-300 mt-2">글로벌 서비스 인프라를 지탱할 서버 로직 및 데이터베이스 설계. Python, Node.js 숙련자 우대.</p>
+</button>
+<div id="rec-kakao" class="hidden px-4 pb-4">
+<div class="mt-1 p-3 rounded-xl bg-slate-900/70 border border-brand-border/60 text-xs text-slate-400 leading-relaxed">추천 이유: Python/Java 백엔드 역량과 데이터베이스 이해도가 공고 요구사항과 잘 맞습니다.</div>
+<button type="button" onclick="openJobRoadmap('kakao-backend')" class="mt-3 w-full py-3 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition"><i data-lucide="route" class="w-4 h-4"></i>이 채용공고에 대한 커리어 로드맵 짜기</button>
+</div>
+</div>
+
+<div class="recommendation-card rounded-xl bg-brand-card/70 border border-brand-border overflow-hidden">
+<button type="button" class="w-full p-4 text-left hover:bg-brand-cardHover transition" onclick="toggleRecommendationCard('rec-naver')">
+<div class="flex justify-between items-center gap-2"><h4 class="text-base font-bold text-white">네이버 - 데이터 분석가</h4><div class="flex items-center gap-2"><span class="text-xs text-slate-400 font-bold">조건 부합 75%</span><i id="rec-naver-icon" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i></div></div>
+<p class="text-xs text-slate-300 mt-2">대규모 사용자 행동 데이터를 기반으로 비즈니스 인사이트 도출 및 데이터 모델링.</p>
+</button>
+<div id="rec-naver" class="hidden px-4 pb-4">
+<div class="mt-1 p-3 rounded-xl bg-slate-900/70 border border-brand-border/60 text-xs text-slate-400 leading-relaxed">추천 이유: 데이터 모델링과 사용자 행동 데이터 분석 역량을 중심으로 준비하면 좋습니다.</div>
+<button type="button" onclick="openJobRoadmap('naver-data')" class="mt-3 w-full py-3 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition"><i data-lucide="route" class="w-4 h-4"></i>이 채용공고에 대한 커리어 로드맵 짜기</button>
+</div>
+</div>
+
+<div class="recommendation-card rounded-xl bg-brand-card/70 border border-brand-border overflow-hidden">
+<button type="button" class="w-full p-4 text-left hover:bg-brand-cardHover transition" onclick="toggleRecommendationCard('rec-coupang')">
+<div class="flex justify-between items-center gap-2"><h4 class="text-base font-bold text-white">쿠팡 - AI 엔지니어</h4><div class="flex items-center gap-2"><span class="text-xs text-slate-400 font-bold">조건 부합 60%</span><i id="rec-coupang-icon" data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i></div></div>
+<p class="text-xs text-slate-300 mt-2">딥러닝 기반 맞춤형 추천 시스템 및 챗봇 엔진 고도화. PyTorch/TensorFlow 유경험자.</p>
+</button>
+<div id="rec-coupang" class="hidden px-4 pb-4">
+<div class="mt-1 p-3 rounded-xl bg-slate-900/70 border border-brand-border/60 text-xs text-slate-400 leading-relaxed">추천 이유: PyTorch/TensorFlow 기반 딥러닝 프로젝트와 모델 서빙 경험을 단계적으로 보완합니다.</div>
+<button type="button" onclick="openJobRoadmap('coupang-ai')" class="mt-3 w-full py-3 rounded-xl bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-black text-xs flex items-center justify-center gap-2 transition"><i data-lucide="route" class="w-4 h-4"></i>이 채용공고에 대한 커리어 로드맵 짜기</button>
+</div>
+</div>
+</section>
+            </div>
+
+            <!-- VIEW 4: 추천 기록 -->
+            <div id="view-history" class="hidden lg:col-span-9 bg-brand-card/40 p-5 rounded-2xl border border-brand-border/40 space-y-5">
+                <div class="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-brand-border/30">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="history" class="w-5 h-5 text-brand-accent"></i>추천 기록</h2>
+                        <p class="text-xs text-slate-400 mt-1">추천받은 날짜와 시간별로 1~3순위 채용공고 추천 결과를 한 세트로 확인하세요.</p>
+                    </div>
+                    <span class="px-3 py-1.5 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent rounded-full text-[11px] font-bold">최근 추천순</span>
+                </div>
+                <div class="max-h-[620px] overflow-y-auto pr-1 space-y-3">
+                    <div class="p-4 rounded-xl bg-brand-card/70 border border-brand-border space-y-3">
+                        <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="px-2 py-1 rounded-lg bg-brand-accent/15 text-brand-accent text-[10px] font-black">추천 #01</span><span class="font-bold text-white text-sm">2026.09.15</span></div><span class="text-slate-400 text-[11px]">오후 5:12</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-accent/30"><span class="text-[10px] font-black text-brand-accent">1순위</span><p class="mt-1 font-bold text-white text-sm">카카오 · 백엔드 개발자</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 88%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">2순위</span><p class="mt-1 font-bold text-white text-sm">네이버 · 데이터 분석가</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 75%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">3순위</span><p class="mt-1 font-bold text-white text-sm">쿠팡 · AI 엔지니어</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 60%</p></div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/70 border border-brand-border space-y-3">
+                        <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="px-2 py-1 rounded-lg bg-brand-accent/15 text-brand-accent text-[10px] font-black">추천 #02</span><span class="font-bold text-white text-sm">2026.09.01</span></div><span class="text-slate-400 text-[11px]">오전 11:30</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-accent/30"><span class="text-[10px] font-black text-brand-accent">1순위</span><p class="mt-1 font-bold text-white text-sm">데이터 사이언티스트</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 84%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">2순위</span><p class="mt-1 font-bold text-white text-sm">클라우드 엔지니어</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 78%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">3순위</span><p class="mt-1 font-bold text-white text-sm">프로젝트 매니저</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 68%</p></div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/70 border border-brand-border space-y-3">
+                        <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="px-2 py-1 rounded-lg bg-brand-accent/15 text-brand-accent text-[10px] font-black">추천 #03</span><span class="font-bold text-white text-sm">2026.08.24</span></div><span class="text-slate-400 text-[11px]">오후 2:08</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-accent/30"><span class="text-[10px] font-black text-brand-accent">1순위</span><p class="mt-1 font-bold text-white text-sm">클라우드 엔지니어</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 86%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">2순위</span><p class="mt-1 font-bold text-white text-sm">백엔드 개발자</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 81%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">3순위</span><p class="mt-1 font-bold text-white text-sm">DevOps 엔지니어</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 73%</p></div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-brand-card/70 border border-brand-border space-y-3">
+                        <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="px-2 py-1 rounded-lg bg-brand-accent/15 text-brand-accent text-[10px] font-black">추천 #04</span><span class="font-bold text-white text-sm">2026.08.10</span></div><span class="text-slate-400 text-[11px]">오전 9:42</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-accent/30"><span class="text-[10px] font-black text-brand-accent">1순위</span><p class="mt-1 font-bold text-white text-sm">프론트엔드 개발자</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 82%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">2순위</span><p class="mt-1 font-bold text-white text-sm">백엔드 개발자</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 79%</p></div>
+                            <div class="p-3 rounded-xl bg-slate-900/70 border border-brand-border"><span class="text-[10px] font-black text-slate-300">3순위</span><p class="mt-1 font-bold text-white text-sm">QA 엔지니어</p><p class="mt-1 text-[11px] text-slate-400">조건 부합 71%</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 5: 내 로드맵 (채용공고 연동형) -->
+<div id="view-roadmap" class="hidden lg:col-span-9 bg-brand-card/40 p-5 rounded-2xl border border-brand-border/40 space-y-5">
+<div class="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-brand-border/30">
+<div>
+<h2 id="roadmap-title" class="text-xl font-bold text-white flex items-center gap-2"><i data-lucide="git-fork" class="w-5 h-5 text-brand-accent"></i>백엔드 개발자 커리어 로드맵</h2>
+<p id="roadmap-subtitle" class="text-xs text-slate-400 mt-1">현재 역량을 기준으로 필요한 스펙과 학습 방향을 한눈에 관리합니다.</p>
+</div>
+<div class="flex items-center gap-2">
+<span id="roadmap-target" class="px-3 py-1.5 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent rounded-full text-[11px] font-bold">목표 직무 · 백엔드 개발자</span>
+<span id="roadmap-score" class="px-3 py-1.5 bg-slate-900 border border-brand-accent/30 text-brand-accent rounded-full text-[11px] font-black">매칭 88점</span>
+</div>
+</div>
+
+<section class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="p-5 bg-brand-card/70 rounded-2xl border border-brand-accent/30 space-y-3">
+<h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="badge-check" class="w-5 h-5 text-brand-accent"></i>현재 강점</h3>
+<ul id="roadmap-strengths" class="space-y-2 text-xs text-slate-300"></ul>
+</div>
+<div class="p-5 bg-brand-card/70 rounded-2xl border border-amber-400/30 space-y-3">
+<h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="triangle-alert" class="w-5 h-5 text-amber-400"></i>보완이 필요한 부분</h3>
+<ul id="roadmap-gaps" class="space-y-2 text-xs text-slate-300"></ul>
+</div>
+</section>
+
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="text-base font-bold text-white flex items-center gap-2"><i data-lucide="calendar-range" class="w-5 h-5 text-brand-accent"></i>셀프 커리큘럼</h3>
+<span class="text-[11px] text-slate-500">자격증 · 공모전 · 프로젝트 중 하나를 선택하세요</span>
+</div>
+<div id="roadmap-curriculum" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+</section>
+</div>
+
+<!-- Right Side Navigation Menu Grid -->
+            <div class="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-4">
+                
+                <!-- Nav Item 1: 마이페이지 (My Page) -->
+                <button id="nav-btn-mypage" onclick="switchNavTab('mypage')" class="bg-brand-card hover:bg-brand-cardHover border border-brand-border/70 hover:border-brand-accent/50 rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg">
+                    <div id="nav-icon-mypage" class="p-3 bg-slate-800/80 rounded-xl group-hover:bg-brand-accent group-hover:text-slate-950 transition duration-300 text-brand-accent">
+                        <i data-lucide="user" class="w-6 h-6"></i>
+                    </div>
+                    <span id="nav-text-mypage" class="text-sm font-semibold text-slate-200">마이페이지</span>
+                </button>
+
+                <!-- Nav Item 2: 직무 추천 (Job Recommendation) -->
+                <button id="nav-btn-recommendation" onclick="switchNavTab('recommendation')" class="bg-brand-card hover:bg-brand-cardHover border border-brand-border/70 hover:border-brand-accent/50 rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg">
+                    <div id="nav-icon-recommendation" class="p-3 bg-slate-800/80 rounded-xl group-hover:bg-brand-accent group-hover:text-slate-950 transition duration-300 text-brand-accent">
+                        <i data-lucide="wand-2" class="w-6 h-6"></i>
+                    </div>
+                    <span id="nav-text-recommendation" class="text-sm font-semibold text-slate-200">직무 추천</span>
+                </button>
+
+                <!-- Nav Item 3: 추천 기록 -->
+                <button id="nav-btn-history" onclick="switchNavTab('history')" class="bg-brand-card hover:bg-brand-cardHover border border-brand-border/70 hover:border-brand-accent/50 rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg">
+                    <div id="nav-icon-history" class="p-3 bg-slate-800/80 rounded-xl group-hover:bg-brand-accent group-hover:text-slate-950 transition duration-300 text-brand-accent">
+                        <i data-lucide="history" class="w-6 h-6"></i>
+                    </div>
+                    <span id="nav-text-history" class="text-sm font-semibold text-slate-200">추천 기록</span>
+                </button>
+
+                <!-- Nav Item 4: 내 로드맵 (Roadmap) -->
+                <button id="nav-btn-roadmap" onclick="switchNavTab('roadmap')" class="bg-brand-card hover:bg-brand-cardHover border border-brand-border/70 hover:border-brand-accent/50 rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg">
+                    <div id="nav-icon-roadmap" class="p-3 bg-slate-800/80 rounded-xl group-hover:bg-brand-accent group-hover:text-slate-950 transition duration-300 text-brand-accent">
+                        <i data-lucide="git-fork" class="w-6 h-6"></i>
+                    </div>
+                    <span id="nav-text-roadmap" class="text-sm font-semibold text-slate-200">내 로드맵</span>
+                </button>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 z-[100] min-h-screen bg-brand-bg flex items-center justify-center p-4 sm:p-6">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(79,209,197,0.10),transparent_38%),radial-gradient(circle_at_80%_80%,rgba(56,189,248,0.06),transparent_32%)] pointer-events-none"></div>
+        <div class="relative w-full max-w-md">
+            <div class="bg-brand-panel/95 backdrop-blur-xl border border-brand-border rounded-3xl p-7 sm:p-9 shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="mx-auto mb-4 w-14 h-14 rounded-2xl bg-brand-accent/10 border border-brand-accent/30 flex items-center justify-center">
+                        <i data-lucide="door-stairwell" class="w-7 h-7 text-brand-accent"></i>
+                    </div>
+                    <div class="text-2xl font-black tracking-wider text-brand-accent">CAREE-UP</div>
+                    
+                    <div class="text-xl font-black tracking-wider text-brand-accent">커리업</div>
+                    <p class="mt-1.5 text-sm text-slate-400">매칭점수 기반 채용공고 개인화 추천 서비스</p>
+                </div>
+
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="login-id" class="text-sm font-semibold text-slate-300">이메일</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                            <input id="login-id" type="email" required maxlength="50" autocomplete="username" placeholder="이메일을 입력하세요"
+                                class="w-full bg-slate-900/80 border border-brand-border rounded-xl pl-10 pr-3.5 py-3.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="login-password" class="text-sm font-semibold text-slate-300">비밀번호</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500"></i>
+                            <input id="login-password" required type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요"
+                                class="w-full bg-slate-900/80 border border-brand-border rounded-xl pl-10 pr-11 py-3.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition">
+                            <button type="button" onclick="togglePassword()" aria-label="비밀번호 표시" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-brand-accent transition">
+                                <i id="password-eye" data-lucide="eye" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="login-error" class="hidden text-xs text-rose-400 bg-rose-400/10 border border-rose-400/20 rounded-xl px-3.5 py-2.5">
+                        이메일과 비밀번호를 입력해주세요.
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 bg-brand-accent hover:bg-brand-accentHover text-slate-950 font-bold rounded-xl transition shadow-lg shadow-brand-accent/10 flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        로그인
+                    </button>
+                </form>
+<form id="signup-form" hidden onsubmit="handleSignup(event)" class="space-y-4"><h2 class="text-xl font-bold text-white">회원가입</h2><p class="text-xs text-slate-400">이메일과 비밀번호로 로그인합니다.</p><div><label class="auth-label" for="signup-user-name">이름</label><input class="auth-field" id="signup-user-name" type="text" required maxlength="30" autocomplete="name"></div><div><label class="auth-label" for="signup-user-age">나이</label><input class="auth-field" id="signup-user-age" type="number" required min="1" max="150" step="1"></div><div><label class="auth-label" for="signup-user-email">이메일</label><input class="auth-field" id="signup-user-email" type="email" required maxlength="50" autocomplete="email"></div><div><label class="auth-label" for="signup-user-password">비밀번호</label><input class="auth-field" id="signup-user-password" type="password" required minlength="8" maxlength="20" autocomplete="new-password" placeholder="8~20자"></div><div><label class="auth-label" for="signup-password-confirm">비밀번호 확인</label><input class="auth-field" id="signup-password-confirm" type="password" required minlength="8" maxlength="20" autocomplete="new-password"></div><div><label class="auth-label" for="signup-user-gender">성별</label><select class="auth-field" id="signup-user-gender"><option>선택안함</option><option>남성</option><option>여성</option><option>기타</option></select></div><p id="signup-error" role="alert" hidden class="text-sm text-rose-400"></p><button type="submit" class="w-full py-3.5 rounded-xl font-bold bg-brand-accent text-slate-950">가입하기</button><button type="button" onclick="showAuthForm('login')" class="w-full text-sm text-slate-400">로그인으로 돌아가기</button></form><p id="auth-notice" role="status" hidden class="mt-4 text-sm text-brand-accent"></p>
+                <div class="mt-5 flex items-center justify-center">
+                    <button onclick="showAuthForm('signup')" class="text-sm text-slate-400 hover:text-brand-accent transition">
+                        아직 계정이 없으신가요? 회원가입
+                    </button>
+                </div>
+
+                <div class="mt-3 text-center">
+                    <button type="button" onclick="openPasswordHelp()" class="text-sm text-slate-400 hover:text-brand-accent transition">비밀번호를 잊으셨나요?</button>
+                </div>
+                <div class="mt-7 pt-5 border-t border-brand-border/60 text-center">
+                    <span class="text-xs text-slate-500">CAREE-UP · 2026</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password reset email request; password changes happen only on reset-password.html. -->
+    <div id="password-help-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[110] hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-brand-card border border-brand-border w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+            <h3 id="reset-title" class="font-bold text-white text-lg">비밀번호 찾기</h3>
+            <form id="reset-request-form" onsubmit="requestPasswordReset(event)" class="space-y-4">
+                <p class="text-sm text-slate-400">가입한 이메일로 비밀번호 변경 링크를 보내드립니다.</p>
+                <label for="reset-email" class="auth-label">이메일</label>
+                <input id="reset-email" type="email" required maxlength="50" autocomplete="email" placeholder="example@email.com" class="auth-field">
+                <p id="reset-request-error" role="alert" hidden class="text-sm text-rose-400"></p>
+                <button type="submit" class="w-full py-3 bg-brand-accent text-slate-950 font-bold rounded-xl">재설정 메일 보내기</button>
+            </form>
+            <button type="button" onclick="closePasswordHelp()" class="w-full py-2 text-sm text-slate-400 hover:text-white">취소</button>
+        </div>
+    </div>
+
+    <!-- Class Change Confirm Modal -->
+    <div id="class-change-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[120] hidden items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <div class="flex items-start gap-3">
+                <div id="class-change-icon-wrap" class="p-2.5 rounded-xl bg-brand-accent/10 text-brand-accent shrink-0"><i id="class-change-icon" data-lucide="sword" class="w-5 h-5"></i></div>
+                <div><h3 class="font-bold text-white text-lg">전직 확인</h3><p id="class-change-message" class="text-sm text-slate-300 mt-2 leading-relaxed"></p></div>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button type="button" onclick="closeClassChangeModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-medium transition">아니오</button>
+                <button type="button" onclick="confirmClassChange()" class="flex-1 py-2.5 bg-brand-accent hover:bg-brand-accentHover text-slate-950 rounded-xl text-sm font-bold transition">예</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendation Filter Modal -->
+    <div id="filter-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 space-y-5 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-700/60 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="sliders-horizontal" class="w-5 h-5 text-brand-accent"></i>
+                    추천 조건 필터
+                </h3>
+                <button onclick="toggleFilterModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">직무 분야</label>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-brand-accent text-slate-950 font-medium rounded-full text-xs">백엔드</span>
+                        <span class="px-3 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer rounded-full text-xs">데이터 엔지니어</span>
+                        <span class="px-3 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer rounded-full text-xs">AI / ML</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-2">조건 부합률 최소 기준</label>
+                    <div class="flex gap-2">
+                        <span class="px-3 py-1 bg-brand-accent text-slate-950 font-medium rounded-full text-xs">50% 이상</span>
+                        <span class="px-3 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer rounded-full text-xs">70% 이상</span>
+                        <span class="px-3 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer rounded-full text-xs">85% 이상</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="toggleFilterModal()" class="px-4 py-2 bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs rounded-lg font-medium transition">
+                    취소
+                </button>
+                <button onclick="toggleFilterModal(); showToast('필터가 적용되었습니다.');" class="px-4 py-2 bg-brand-accent text-slate-950 hover:bg-brand-accentHover text-xs rounded-lg font-bold transition">
+                    적용하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-message" class="fixed bottom-6 bg-brand-accent text-slate-950 font-bold px-5 py-3 rounded-2xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50 text-xs sm:text-sm flex items-center gap-2">
+        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+        <span id="toast-text">알림 메세지</span>
+    </div>
+
+    <script>
+        // Auth tokens stay in memory. Reload always opens the signed-out screen.
+        const SUPABASE_URL = 'https://rrfydzmsjwfgxfynfqys.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jSOvZcQtUoXJvgQ6CRCZ8w_5rBSamsS';
+        // If Supabase falls back to the Site URL, forward recovery links to the dedicated page.
+        if (new URLSearchParams(window.location.hash.slice(1)).get('type') === 'recovery') {
+            window.location.replace(new URL('reset-password.html', window.location.href).href + window.location.hash);
+        }
+        const authClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: { persistSession: false, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'implicit' }
+        });
+        let authBusy = false;
+        function setAuthState(loggedIn, user) {
+            document.getElementById('app-shell').hidden = !loggedIn;
+            const screen = document.getElementById('login-screen');
+            screen.hidden = loggedIn;
+            screen.classList.toggle('hidden', loggedIn);
+            if (!loggedIn) clearMyPageState();
+            if (loggedIn) {
+                document.getElementById('user-display-name').textContent = user?.user_metadata?.user_name || '회원';
+            }
+        }
+        function showAuthForm(mode) {
+            document.getElementById('login-form').hidden = mode !== 'login';
+            document.getElementById('signup-form').hidden = mode !== 'signup';
+            document.getElementById('auth-notice').hidden = true;
+            document.getElementById('signup-error').hidden = true;
+            document.getElementById('login-error').classList.add('hidden');
+        }
+        function authError(error) {
+            const code = error?.code;
+            if (code === 'otp_expired' || code === 'otp_disabled') return '재설정 링크가 만료되었습니다. 새 메일을 요청해주세요.';
+            if (code === 'same_password') return '기존 비밀번호와 다른 비밀번호를 입력해주세요.';
+            if (code === 'email_address_not_authorized') return '이 프로젝트에서 메일을 보낼 수 없는 주소입니다. 관리자에게 메일 발송 설정을 문의해주세요.';
+            if (code === 'invalid_credentials') return '이메일 또는 비밀번호가 올바르지 않습니다.';
+            if (code === 'email_not_confirmed') return '이메일 인증이 필요합니다. 데모에서는 Supabase의 Confirm email 설정을 꺼주세요.';
+            if (code === 'user_already_exists') return '이미 가입한 이메일입니다. 로그인해주세요.';
+            if (code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit') return '요청이 많습니다. 잠시 후 다시 시도해주세요.';
+            if (code === 'email_address_invalid') return '다른 이메일 주소를 입력해주세요.';
+            if ((error?.message || '').includes('Database error')) return '회원정보 저장에 실패했습니다. 회원정보 테이블 설정을 확인해주세요.';
+            return error?.message || '인증 서버에 연결할 수 없습니다. 네트워크를 확인해주세요.';
+        }
+        async function runAuth(formId, errorId, action) {
+            if (authBusy) return;
+            const form = document.getElementById(formId);
+            if (!form.reportValidity()) return;
+            const errorBox = document.getElementById(errorId);
+            errorBox.hidden = true; errorBox.classList.add('hidden');
+            const button = form.querySelector('[type="submit"]');
+            const label = button.textContent;
+            authBusy = true; button.disabled = true; button.textContent = '처리 중…';
+            try {
+                if (!authClient) throw new Error('인증 모듈을 불러오지 못했습니다. 인터넷 연결 후 새로고침해주세요.');
+                await action();
+            } catch (error) {
+                errorBox.textContent = authError(error);
+                errorBox.hidden = false; errorBox.classList.remove('hidden');
+            } finally {
+                authBusy = false; button.disabled = false; button.textContent = label;
+            }
+        }
+        async function handleLogin(event) {
+            event.preventDefault();
+            await runAuth('login-form', 'login-error', async () => {
+                const { data, error } = await authClient.auth.signInWithPassword({
+                    email: document.getElementById('login-id').value.trim().toLowerCase(),
+                    password: document.getElementById('login-password').value
+                });
+                if (error) throw error;
+                if (!data.session || !data.user) throw new Error('로그인 세션을 확인할 수 없습니다.');
+                setAuthState(true, data.user);
+                void loadMyPageData(data.user);
+                document.getElementById('login-password').value = '';
+                showToast('로그인 되었습니다.');
+            });
+        }
+        async function handleSignup(event) {
+            event.preventDefault();
+            await runAuth('signup-form', 'signup-error', async () => {
+                const value = id => document.getElementById('signup-' + id).value.trim();
+                const password = document.getElementById('signup-user-password').value;
+                if (password !== document.getElementById('signup-password-confirm').value)
+                    throw new Error('비밀번호 확인이 일치하지 않습니다.');
+                if (!value('user-name')) throw new Error('이름을 입력해주세요.');
+                const { data, error } = await authClient.auth.signUp({
+                    email: value('user-email').toLowerCase(), password,
+                    options: { data: { user_name: value('user-name'),
+                        user_age: Number(value('user-age')), user_gender: value('user-gender') } }
+                });
+                if (error) throw error;
+                document.getElementById('login-id').value = value('user-email').toLowerCase();
+                document.getElementById('signup-form').reset();
+                showAuthForm('login');
+                if (data.session) {
+                    setAuthState(true, data.user);
+                    void loadMyPageData(data.user);
+                    showToast('회원가입이 완료되었습니다.');
+                } else {
+                    const notice = document.getElementById('auth-notice');
+                    notice.textContent = '가입 요청을 접수했습니다. 현재 프로젝트의 이메일 확인 설정을 확인해주세요.';
+                    notice.hidden = false;
+                }
+            });
+        }
+        async function logout() {
+            if (authBusy) return;
+            try {
+                const result = await authClient?.auth.signOut({ scope: 'local' });
+                if (result?.error) throw result.error;
+                showAuthForm('login'); setAuthState(false);
+                document.getElementById('login-password').value = '';
+                showToast('로그아웃 되었습니다.');
+            } catch (error) { showToast(authError(error)); }
+        }
+        authClient?.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') setAuthState(false);
+        });
+        function togglePassword() {
+            const input = document.getElementById('login-password');
+            const eye = document.getElementById('password-eye');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eye.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                eye.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function openPasswordHelp() {
+            if (authBusy) return;
+            document.getElementById('reset-request-form').reset();
+            document.getElementById('reset-request-error').hidden = true;
+            document.getElementById('reset-email').value = document.getElementById('login-id').value;
+            const modal = document.getElementById('password-help-modal');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+            setTimeout(() => document.getElementById('reset-email').focus(), 50);
+        }
+        function closePasswordHelp() {
+            if (authBusy) return;
+            const modal = document.getElementById('password-help-modal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+            document.getElementById('login-id').focus();
+        }
+        async function requestPasswordReset(event) {
+            event.preventDefault();
+            await runAuth('reset-request-form', 'reset-request-error', async () => {
+                if (!['http:', 'https:'].includes(window.location.protocol))
+                    throw new Error('start_local.py를 실행하고 http://localhost:8000/index.html 주소로 열어주세요.');
+                const email = document.getElementById('reset-email').value.trim().toLowerCase();
+                const redirectTo = new URL('reset-password.html', window.location.href).href;
+                const { error } = await authClient.auth.resetPasswordForEmail(email, { redirectTo });
+                if (error) throw error;
+                document.getElementById('reset-request-form').reset();
+                const modal = document.getElementById('password-help-modal');
+                modal.classList.add('hidden'); modal.classList.remove('flex');
+                const notice = document.getElementById('auth-notice');
+                notice.textContent = '가입된 이메일이라면 재설정 메일이 발송되었습니다. 메일의 Reset Password 링크를 눌러주세요. 스팸함도 확인해주세요.';
+                notice.hidden = false;
+            });
+        }
+
+        // 처음 페이지를 열 때는 항상 로그아웃 상태로 시작
+        document.addEventListener('DOMContentLoaded', () => {
+            setAuthState(false);
+        });
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Update MyPage preview fields live as user types/selects
+        function updateMyPagePreview() {
+            if (!document.getElementById('input-name')) return;
+            const nameVal = document.getElementById('input-name').value || '회원';
+            const emailVal = document.getElementById('input-email').value || 'example@email.com';
+            const majorVal = document.getElementById('input-major').value;
+            const jobVal = document.getElementById('input-job').value;
+            const stackVal = document.getElementById('input-stack').value;
+
+            document.getElementById('preview-name').textContent = nameVal;
+            document.getElementById('preview-email').textContent = emailVal;
+            document.getElementById('preview-major').textContent = majorVal;
+            document.getElementById('preview-job').textContent = jobVal;
+            document.getElementById('preview-stack').textContent = stackVal;
+            document.getElementById('user-display-name').textContent = nameVal;
+        }
+
+        // Save MyPage Information
+        function startPreferenceTI(){ showToast('선호직무TI 검사를 준비하고 있습니다.'); }
+
+        // MyPage database integration
+        let preferredJobCodes = [];
+        let jobCatalog = [];
+        let myPageUserId = null;
+        let myPageAuthId = null;
+        let myPageReady = false;
+        let myPageBusy = false;
+        let myPageEpoch = 0;
+
+        function myPageStatus(message, isError = false) {
+            const box = document.getElementById('mypage-status');
+            box.textContent = message;
+            box.classList.toggle('text-rose-400', isError);
+            box.classList.toggle('text-slate-400', !isError);
+        }
+        function myPageError(error) {
+            if (error?.code === 'PGRST202') return '저장 함수가 없습니다. 동봉된 mypage_save.sql을 Supabase SQL Editor에서 먼저 실행해주세요.';
+            if (error?.code === 'PGRST205') return '회원 스펙 테이블이 없습니다. 테이블 생성 SQL을 먼저 실행해주세요.';
+            if (error?.code === '42501') return '저장 권한을 확인할 수 없습니다. 다시 로그인하고 DB 권한 설정을 확인해주세요.';
+            return error?.message || 'DB에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.';
+        }
+        function setMyPageBusy(busy) {
+            myPageBusy = busy;
+            document.getElementById('mypage-save').disabled = busy || !myPageReady;
+            document.getElementById('mypage-save-label').textContent = busy ? '처리 중…' : '저장하기';
+            document.getElementById('mypage-retry').disabled = busy;
+            ['input-grade', 'input-gpa', 'input-stack', 'input-certificates'].forEach(id => document.getElementById(id).disabled = busy || !myPageReady);
+            document.querySelectorAll('input[name="preferred-job"]').forEach(input => input.disabled = busy || !myPageReady);
+        }
+        function clearMyPageState() {
+            myPageEpoch++;
+            myPageUserId = null; myPageAuthId = null; myPageReady = false;
+            preferredJobCodes = [];
+            ['input-grade', 'input-gpa', 'input-stack', 'input-certificates'].forEach(id => document.getElementById(id).value = '');
+            syncPreferredJobRanks();
+            setMyPageBusy(false);
+            document.getElementById('mypage-retry').hidden = true;
+            myPageStatus('로그인 후 회원정보를 불러옵니다.');
+        }
+        function syncPreferredJobRanks() {
+            document.querySelectorAll('input[name="preferred-job"]').forEach(input => {
+                const index = preferredJobCodes.indexOf(input.value);
+                input.checked = index !== -1;
+                const label = input.closest('.job-preference-option');
+                label?.classList.toggle('is-selected', index !== -1);
+                const badge = label?.querySelector('.job-preference-rank');
+                if (badge) badge.textContent = index !== -1 ? String(index + 1) : '';
+            });
+        }
+        function handlePreferredJobChange(input) {
+            if (!myPageReady || myPageBusy) { syncPreferredJobRanks(); return; }
+            if (input.checked) {
+                if (!preferredJobCodes.includes(input.value)) {
+                    if (preferredJobCodes.length >= 3) {
+                        input.checked = false;
+                        showToast('선호 직무는 최대 3개까지 선택할 수 있습니다.');
+                    } else preferredJobCodes.push(input.value);
+                }
+            } else preferredJobCodes = preferredJobCodes.filter(code => code !== input.value);
+            syncPreferredJobRanks();
+        }
+        function renderJobCatalog(rows) {
+            jobCatalog = rows;
+            const container = document.getElementById('job-preference-options');
+            container.replaceChildren();
+            rows.forEach(row => {
+                const label = document.createElement('label'); label.className = 'job-preference-option';
+                const input = document.createElement('input');
+                input.type = 'checkbox'; input.name = 'preferred-job'; input.value = row.JOB_CODE; input.className = 'sr-only peer';
+                const span = document.createElement('span'); span.textContent = row.JOB_NAME;
+                const rank = document.createElement('b'); rank.className = 'job-preference-rank'; rank.setAttribute('aria-hidden', 'true');
+                span.append(rank); label.append(input, span); container.append(label);
+            });
+            syncPreferredJobRanks();
+        }
+        function listForInput(value) {
+            if (value == null) return '';
+            if (!Array.isArray(value) || value.some(item => typeof item !== 'string'))
+                throw new Error('기술 스택과 자격증은 문자열 JSON 배열이어야 합니다. 기존 DB 값을 확인해주세요.');
+            return value.join(', ');
+        }
+        async function loadMyPageData(user) {
+            clearMyPageState();
+            const epoch = myPageEpoch;
+            myPageAuthId = user.id;
+            setMyPageBusy(true);
+            myPageStatus('저장된 회원정보를 불러오는 중입니다…');
+            try {
+                const [member, catalog] = await Promise.all([
+                    authClient.from('SC_USERS').select('USER_ID').eq('AUTH_USER_ID', user.id).single(),
+                    authClient.from('SC_JOB_CLASSIFICATION').select('JOB_CODE,JOB_NAME').order('JOB_CODE')
+                ]);
+                if (member.error) throw member.error;
+                if (catalog.error) throw catalog.error;
+                if (!member.data) throw new Error('SC_USERS에서 회원정보를 찾을 수 없습니다.');
+                if (!catalog.data?.length) throw new Error('직무분류가 비어 있습니다. 직무분류 SQL을 실행해주세요.');
+                const userId = member.data.USER_ID;
+                const [spec, preferences] = await Promise.all([
+                    authClient.from('SC_SPEC_INFO').select('SPEC_GRADE,SPEC_GPA,SPEC_TECH_SKILL,SPEC_LICENSES').eq('USER_ID', userId).maybeSingle(),
+                    authClient.from('SC_USER_PRFD_JOB').select('JOB_CODE,PRFD_RANK').eq('USER_ID', userId).order('PRFD_RANK')
+                ]);
+                if (spec.error) throw spec.error;
+                if (preferences.error) throw preferences.error;
+                if (epoch !== myPageEpoch) return;
+                const saved = spec.data;
+                const skills = listForInput(saved?.SPEC_TECH_SKILL);
+                const licenses = listForInput(saved?.SPEC_LICENSES);
+                const choices = preferences.data || [];
+                if (choices.length > 3 || choices.some(item => !catalog.data.some(job => job.JOB_CODE === item.JOB_CODE)))
+                    throw new Error('저장된 선호직무와 직무분류가 일치하지 않습니다. DB 분류를 확인해주세요.');
+                preferredJobCodes = choices.map(item => item.JOB_CODE);
+                renderJobCatalog(catalog.data);
+                document.getElementById('input-grade').value = saved?.SPEC_GRADE ?? '';
+                document.getElementById('input-gpa').value = saved?.SPEC_GPA ?? '';
+                document.getElementById('input-stack').value = skills;
+                document.getElementById('input-certificates').value = licenses;
+                myPageUserId = userId; myPageReady = true;
+                myPageStatus(saved || choices.length ? '저장된 정보를 불러왔습니다.' : '정보를 입력한 뒤 저장하기를 눌러주세요.');
+            } catch (error) {
+                if (epoch !== myPageEpoch) return;
+                myPageReady = false;
+                myPageStatus('불러오기 실패: ' + myPageError(error), true);
+                document.getElementById('mypage-retry').hidden = false;
+            } finally {
+                if (epoch === myPageEpoch) setMyPageBusy(false);
+            }
+        }
+        async function retryMyPageLoad() {
+            if (myPageBusy) return;
+            try {
+                const { data, error } = await authClient.auth.getUser();
+                if (error || !data.user) throw new Error('다시 로그인해주세요.');
+                await loadMyPageData(data.user);
+            } catch (error) { myPageStatus(myPageError(error), true); }
+        }
+        function parseCommaList(value) {
+            return [...new Set(value.split(/[,，\n]+/).map(item => item.trim()).filter(Boolean))];
+        }
+        async function saveMyPageInfo() {
+            if (myPageBusy) return;
+            if (!myPageReady || myPageUserId == null) { myPageStatus('회원정보를 먼저 불러와야 합니다. 다시 불러오기를 눌러주세요.', true); return; }
+            const gradeValue = document.getElementById('input-grade').value;
+            const gpaInput = document.getElementById('input-gpa');
+            if (!gpaInput.reportValidity()) return;
+            const grade = gradeValue === '' ? null : Number(gradeValue);
+            const gpa = gpaInput.value.trim() === '' ? null : Number(gpaInput.value);
+            if (grade !== null && (!Number.isInteger(grade) || grade < 1 || grade > 4)) { myPageStatus('학년을 1~4학년 중 선택해주세요.', true); return; }
+            if (gpa !== null && (!Number.isFinite(gpa) || gpa < 0 || gpa > 4.5)) { myPageStatus('GPA는 0~4.5 사이의 숫자로 입력해주세요.', true); return; }
+            if (preferredJobCodes.length > 3 || preferredJobCodes.some(code => !jobCatalog.some(job => job.JOB_CODE === code))) { myPageStatus('선호 직무를 다시 선택해주세요.', true); return; }
+            const payload = {
+                p_grade: grade, p_gpa: gpa,
+                p_tech_skill: parseCommaList(document.getElementById('input-stack').value),
+                p_licenses: parseCommaList(document.getElementById('input-certificates').value),
+                p_job_codes: [...preferredJobCodes]
+            };
+            const epoch = myPageEpoch, userId = myPageUserId, authId = myPageAuthId;
+            setMyPageBusy(true); myPageStatus('DB에 저장 중입니다…');
+            try {
+                const account = await authClient.auth.getUser();
+                if (account.error || account.data?.user?.id !== authId) throw new Error('로그인이 만료되었거나 계정이 바뀌었습니다. 다시 로그인해주세요.');
+                const { data, error } = await authClient.rpc('save_user_spec', payload);
+                if (error) throw error;
+                if (epoch !== myPageEpoch) return;
+                if (!data?.saved || data.user_id !== userId) throw new Error('저장 완료 응답을 확인하지 못했습니다. 다시 불러오기로 확인해주세요.');
+                myPageStatus('회원 스펙과 선호직무가 저장되었습니다.');
+                showToast('저장되었습니다.');
+            } catch (error) {
+                if (epoch !== myPageEpoch) return;
+                myPageStatus('저장 실패: ' + myPageError(error), true);
+                showToast('저장하지 못했습니다. 안내 메시지를 확인해주세요.');
+            } finally {
+                if (epoch === myPageEpoch) setMyPageBusy(false);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('job-preference-options').addEventListener('change', event => {
+                if (event.target.matches('input[name="preferred-job"]')) handlePreferredJobChange(event.target);
+            });
+            syncPreferredJobRanks();
+            setMyPageBusy(false);
+        });
+
+        // Home dashboard: editable, curriculum-aware quest list
+        let homeTodoItems = [];
+
+        function getSelectedCurriculum() {
+            const job = jobRoadmaps[pinnedJobId] || jobRoadmaps['kakao-backend'];
+            return job.curriculum[selectedCurriculumIndex] || job.curriculum[0];
+        }
+
+        function buildCurriculumHomeData() {
+            const item = getSelectedCurriculum();
+            const type = item?.[0] || '프로젝트';
+            const name = item?.[1] || '셀프 커리큘럼';
+            const detail = item?.[3] || '';
+            const common = {
+                '자격증': [
+                    `${name} 학습 범위 30분 정리`,
+                    `${name} 핵심 개념 노트 1페이지 작성`,
+                    `${name} 기출/예상문제 10문제 풀기`,
+                    '오답 또는 부족한 개념 3개 보완'
+                ],
+                '공모전': [
+                    `${name} 주제·문제정의 30분 정리`,
+                    '팀/아이디어의 핵심 기능 1개 구체화',
+                    '경쟁 서비스 또는 유사 사례 3개 조사',
+                    '오늘 작업 결과를 포트폴리오 메모에 기록'
+                ],
+                '프로젝트': [
+                    `${name} 핵심 기능 1개 구현하기`,
+                    'API 또는 DB 설계 1개 정리',
+                    'GitHub 커밋 1회 남기기',
+                    '구현 결과와 다음 작업을 README에 기록'
+                ]
+            };
+            return { type, name, detail, todos: common[type] || common['프로젝트'] };
+        }
+
+        const milestonePlans = {
+            'kakao-backend': [
+                ['SQL·개발 기초 학습 및 시험 일정 확정', '기출문제 3회 풀이·오답 정리', 'SQLD 또는 정보처리기사 취득'],
+                ['개발 공모전 선정·팀 구성·문제 정의', '핵심 서비스 구현·팀 테스트', '공모전 제출·발표 및 결과물 정리'],
+                ['Spring Boot API·DB 설계 완료', '핵심 기능 구현·통합 테스트', 'AWS 배포·GitHub 포트폴리오 완성']
+            ],
+            'naver-data': [
+                ['SQL·통계 기초 학습 및 시험 선택', 'SQLD 또는 ADsP 기출·모의시험 풀이', 'SQLD 또는 ADsP 취득'],
+                ['데이터 공모전 선정·분석 주제 정의', '데이터 전처리·분석·시각화', '분석 결과 제출·포트폴리오 정리'],
+                ['분석 데이터 선정·비즈니스 지표 정의', '전처리·통계 분석·시각화 완료', '인사이트 보고서·분석 포트폴리오 완성']
+            ],
+            'coupang-ai': [
+                ['데이터·AI 기초 학습 및 자격 선택', 'ADsP 등 관련 자격 모의시험 풀이', '선택한 데이터·AI 관련 자격 취득'],
+                ['AI 공모전 선정·데이터 및 평가 지표 정의', '학습 모델 구현·성능 개선', '모델 결과 제출·실험 기록 정리'],
+                ['추천 데이터 준비·모델 구조 설계', 'PyTorch/TensorFlow 모델 학습·평가', '추천 모델 서빙·AI 포트폴리오 완성']
+            ]
+        };
+        let adventureStates = {};
+        try { adventureStates = JSON.parse(localStorage.getItem('career-up-adventure-v2') || '{}') || {}; } catch (_) {}
+        function persistAdventure() {
+            try { localStorage.setItem('career-up-adventure-v2', JSON.stringify(adventureStates)); } catch (_) {}
+        }
+        function adventureState() {
+            const key = pinnedJobId + ':' + selectedCurriculumIndex;
+            if (!adventureStates[key]) {
+                const data = buildCurriculumHomeData();
+                adventureStates[key] = {goal:data.name, todos:data.todos.map(text => ({text,done:false,rewarded:false})), milestones:[false,false,false], earned:0};
+            }
+            return adventureStates[key];
+        }
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+        }
+        function saveSpecGoal(value) {
+            adventureState().goal = value;
+            document.getElementById('home-levelup-goal').textContent = value;
+            persistAdventure();
+        }
+        function saveTodo(index,value) { homeTodoItems[index].text=value; persistAdventure(); }
+        function renderHomeTodoList() {
+            const featured = document.getElementById('home-todo-featured');
+            const first = homeTodoItems[0];
+            document.getElementById('home-todo-featured-input').value = first.text;
+            document.getElementById('home-todo-featured-input').oninput = e => saveTodo(0,e.target.value);
+            featured.classList.toggle('opacity-60', first.done);
+            featured.querySelector('input').classList.toggle('line-through', first.done);
+            featured.querySelector('button').innerHTML = first.done ? '<span class="text-brand-accent">✓</span>' : '';
+            document.getElementById('home-todo-list').innerHTML = homeTodoItems.slice(1).map((todo,i) => `
+                <div class="home-todo-row flex items-start gap-2 p-2.5 rounded-xl bg-slate-900/55 border border-brand-border/40 ${todo.done?'opacity-60':''}">
+                    <button type="button" aria-label="퀘스트 완료" aria-pressed="${todo.done}" onclick="toggleHomeTodo(this)" class="w-4 h-4 rounded border border-brand-accent text-brand-accent flex items-center justify-center shrink-0">${todo.done?'✓':''}</button>
+                    <input aria-label="퀘스트 내용" value="${escapeHtml(todo.text)}" oninput="saveTodo(${i+1},this.value)" class="min-w-0 flex-1 bg-transparent text-[11px] text-slate-200 focus:outline-none ${todo.done?'line-through':''}" />
+                    <button type="button" onclick="removeHomeTodo(${i+1})" class="text-slate-500 hover:text-rose-400" aria-label="삭제">×</button>
+                </div>`).join('');
+            featured.querySelector('button').setAttribute('aria-pressed',String(first.done));
+        }
+        function addHomeTodo() {
+            homeTodoItems.push({text:'새 할 일을 입력하세요',done:false,rewarded:false});
+            persistAdventure(); renderHomeTodoList(); updateAdventureProgress();
+            const inputs=document.querySelectorAll('#home-todo-list input'); inputs[inputs.length-1]?.select();
+        }
+        function removeHomeTodo(index) {
+            homeTodoItems.splice(index,1); persistAdventure(); renderHomeTodoList(); updateAdventureProgress();
+        }
+        function toggleHomeTodo(button) {
+            const row=button.closest('.home-todo-row, #home-todo-featured');
+            if(!row) return;
+            const index=row.id==='home-todo-featured'?0:Array.from(document.querySelectorAll('.home-todo-row')).indexOf(row)+1;
+            const todo=homeTodoItems[index]; if(!todo) return;
+            const state=adventureState(); const oldLevel=1+Math.floor(state.earned/100);
+            todo.done=!todo.done;
+            if(todo.done && !todo.rewarded) {state.earned+=25;todo.rewarded=true;}
+            persistAdventure();renderHomeTodoList();updateAdventureProgress();
+            if(1+Math.floor(state.earned/100)>oldLevel) showToast(`레벨 업! Lv. ${1+Math.floor(state.earned/100)}`);
+        }
+        function toggleMilestone(index) {
+            const state=adventureState(); state.milestones[index]=!state.milestones[index];
+            persistAdventure();renderMilestones();updateAdventureProgress();
+        }
+        function renderMilestones() {
+            const state=adventureState();
+            const goals=milestonePlans[pinnedJobId][selectedCurriculumIndex];
+            const periods=['단기 · 1~2주','중기 · 3~6주','최종 · 7~12주'];
+            document.getElementById('home-levelup-subgoals').innerHTML=goals.map((text,i)=>`
+                <button type="button" onclick="toggleMilestone(${i})" aria-pressed="${state.milestones[i]}" class="text-left p-3 rounded-xl border ${state.milestones[i]?'border-brand-accent bg-brand-accent/10':'border-brand-border bg-slate-900/50'} flex gap-3 items-start">
+                    <span class="text-brand-accent font-bold">${state.milestones[i]?'✓':'○'}</span><span class="min-w-0"><span class="block text-brand-accent font-bold mb-1">${i+1}단계 · ${periods[i]}</span><span class="block text-xs text-slate-200 ${state.milestones[i]?'line-through':''}">${escapeHtml(text)}</span></span>
+                </button>`).join('');
+            const done=state.milestones.filter(Boolean).length;
+            document.getElementById('home-levelup-progress').style.width=(done/3*100)+'%';
+            document.getElementById('home-levelup-progress-label').textContent=`${done} / 3 달성`;
+            document.getElementById('adventure-job-stage').textContent=done?`${done}차전직`:'전직 준비';
+            document.getElementById('adventure-stage-count').textContent=`중간목표 ${done} / 3`;
+        }
+        function updateAdventureProgress() {
+            const state=adventureState(); const exp=state.earned%100;
+            document.getElementById('adventure-progress').style.width=exp+'%';
+            document.getElementById('adventure-progress').parentElement.setAttribute('role','progressbar');
+            document.getElementById('adventure-progress').parentElement.setAttribute('aria-valuenow',exp);
+            document.getElementById('adventure-progress').parentElement.setAttribute('aria-valuemin',0);
+            document.getElementById('adventure-progress').parentElement.setAttribute('aria-valuemax',100);
+            document.getElementById('adventure-progress-text').textContent=`${exp} / 100 EXP`;
+            document.getElementById('adventure-level').textContent=`Lv. ${1+Math.floor(state.earned/100)}`;
+            document.getElementById('adventure-quest-count').textContent=`${homeTodoItems.filter(x=>x.done).length} / ${homeTodoItems.length}`;
+            document.getElementById('adventure-subtext').textContent='퀘스트 최초 완료 +25 EXP · 100 EXP마다 레벨 업';
+        }
+        function renderHomeAdventure() {
+            const data=buildCurriculumHomeData(); const state=adventureState();
+            homeTodoItems=state.todos;
+            document.getElementById('home-todo-target').textContent=`목표: ${data.name}`;
+            document.getElementById('adventure-spec-goal').value=state.goal;
+            document.getElementById('home-levelup-goal').textContent=state.goal;
+            document.getElementById('home-levelup-detail').textContent='목표에 맞춘 3단계 로드맵 · 달성한 중간목표를 눌러 체크하세요.';
+            document.getElementById('adventure-class').textContent=currentClassRouteIndex===null?'미전직':getClassRoute(currentClassRouteIndex).className;
+            renderHomeTodoList();renderMilestones();updateAdventureProgress();lucide.createIcons();
+        }
+
+        // Legacy compatibility for any existing checklist callers.
+        function toggleCheckItem(el) { toggleHomeTodo(el); }
+
+        // Toggle Recommendation Reason Card
+        function toggleReason(id) {
+            const card = document.getElementById(id);
+            if (card) {
+                card.classList.toggle('hidden');
+            }
+        }
+
+        function loadRecommendationHistory(date) { showToast(`${date} 추천 결과를 불러왔습니다.`); const el=document.getElementById('latest-recommendation-results'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+        function startNewRecommendation() { showToast('새 직무추천을 준비합니다.'); const el=document.getElementById('latest-recommendation-results'); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+        // Toggle Filter Modal
+        function toggleFilterModal() {
+            const modal = document.getElementById('filter-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Switch between '전체' / '상세' filter tabs in Job Recommendation
+        function selectFilterTab(type) {
+            const btnAll = document.getElementById('rec-btn-all');
+            const btnDetail = document.getElementById('rec-btn-detail');
+
+            if (type === 'all') {
+                btnAll.className = "px-3.5 py-1.5 rounded-lg bg-brand-accent text-slate-950 font-bold transition shadow-sm";
+                btnDetail.className = "px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            } else {
+                btnDetail.className = "px-3.5 py-1.5 rounded-lg bg-brand-accent text-slate-950 font-bold transition shadow-sm";
+                btnAll.className = "px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition";
+            }
+        }
+
+        // Main Navigation View Switcher
+        function switchNavTab(activeTab) {
+            const tabs = ['dashboard', 'mypage', 'recommendation', 'history', 'roadmap'];
+
+            // Hide all views first
+            tabs.forEach(tab => {
+                const viewEl = document.getElementById(`view-${tab}`);
+                if (viewEl) viewEl.classList.add('hidden');
+            });
+
+            // Show selected view
+            const targetView = document.getElementById(`view-${activeTab}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            // Update Right Nav Button Highlight States
+            const navKeys = ['mypage', 'recommendation', 'history', 'roadmap'];
+            
+            navKeys.forEach(key => {
+                const btn = document.getElementById(`nav-btn-${key}`);
+                const icon = document.getElementById(`nav-icon-${key}`);
+                const text = document.getElementById(`nav-text-${key}`);
+
+                if (!btn) return;
+
+                if (key === activeTab) {
+                    btn.className = "bg-brand-accent border border-brand-accent rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg";
+                    icon.className = "p-3 bg-slate-950/20 rounded-xl text-slate-950";
+                    text.className = "text-sm font-bold text-slate-950";
+                } else {
+                    btn.className = "bg-brand-card hover:bg-brand-cardHover border border-brand-border/70 hover:border-brand-accent/50 rounded-2xl p-5 flex flex-col items-center justify-center space-y-3 transition group shadow-lg";
+                    icon.className = "p-3 bg-slate-800/80 rounded-xl group-hover:bg-brand-accent group-hover:text-slate-950 transition duration-300 text-brand-accent";
+                    text.className = "text-sm font-semibold text-slate-200";
+                }
+            });
+
+            // Re-render Lucide icons
+            lucide.createIcons();
+        }
+
+
+        // Job-specific roadmap data. The selected job is also used for the pinned matching report.
+        const jobRoadmaps = {
+            'kakao-backend': {
+                company: '카카오', role: '백엔드 개발자', score: 88,
+                strengths: ['Python / Java 관련 백엔드 핵심 역량', '데이터베이스 과목 이수 및 SQL 기반 이해', '알고리즘 및 문제 해결 능력'],
+                gaps: ['Spring Boot 실전 프로젝트 경험', 'AWS 기반 서비스 배포 경험', '실제 서비스 형태의 포트폴리오 확장'],
+                curriculum: [
+                    ['자격증', 'SQLD / 정보처리기사', '백엔드 개발에 필요한 데이터베이스와 개발 기본기를 증명할 수 있는 자격증을 준비합니다.', '목표: SQLD 또는 정보처리기사 취득'],
+                    ['공모전', '개발·IT 공모전', '팀을 구성해 실제 서비스 아이디어를 구현하고 문제 해결 과정을 포트폴리오로 정리합니다.', '목표: 공모전 1회 참가 · 결과물 정리'],
+                    ['프로젝트', '백엔드 프로젝트', 'Spring Boot, DB, API, 배포를 포함한 실전형 프로젝트를 완성해 개발 역량을 보여줍니다.', '목표: GitHub 프로젝트 1개 완성']
+                ]
+            },
+            'naver-data': {
+                company: '네이버', role: '데이터 분석가', score: 75,
+                strengths: ['SQL 기반 데이터베이스 이해', '문제 해결 및 논리적 분석 능력', '기초적인 Python 활용 역량'],
+                gaps: ['통계 분석 및 실험 설계', '대규모 데이터 전처리·시각화 프로젝트', '비즈니스 지표를 활용한 포트폴리오'],
+                curriculum: [
+                    ['자격증', 'SQLD / ADsP', 'SQL과 데이터 분석 기초 역량을 체계적으로 학습하고 자격증으로 정리합니다.', '목표: SQLD 또는 ADsP 취득'],
+                    ['공모전', '데이터 분석 공모전', '실제 데이터를 분석해 인사이트를 도출하고 분석 과정과 결과를 포트폴리오로 정리합니다.', '목표: 데이터 공모전 1회 참가'],
+                    ['프로젝트', '데이터 분석 프로젝트', '데이터 전처리·시각화·분석·인사이트 도출까지 하나의 프로젝트로 완성합니다.', '목표: 분석 포트폴리오 1개 완성']
+                ]
+            },
+            'coupang-ai': {
+                company: '쿠팡', role: 'AI 엔지니어', score: 60,
+                strengths: ['Python 활용 역량', '알고리즘 및 문제 해결 능력', '데이터베이스·데이터 처리 기초'],
+                gaps: ['PyTorch/TensorFlow 기반 딥러닝 프로젝트', '추천 시스템·모델 평가 경험', '모델 서빙 및 MLOps 기초'],
+                curriculum: [
+                    ['자격증', 'ADsP / AI 관련 자격', '데이터 분석과 AI 기초 지식을 체계적으로 학습해 관련 역량을 증명합니다.', '목표: ADsP 등 관련 자격 취득'],
+                    ['공모전', 'AI·데이터 공모전', '머신러닝/딥러닝을 활용한 문제 해결 경험을 만들고 모델 성능과 결과를 정리합니다.', '목표: AI 공모전 1회 참가'],
+                    ['프로젝트', 'AI 추천 시스템 프로젝트', 'PyTorch/TensorFlow를 활용해 추천 모델을 구현하고 모델 평가와 서비스 적용까지 경험합니다.', '목표: AI 프로젝트 1개 완성']
+                ]
+            }
+        };
+
+        let pinnedJobId = 'kakao-backend';
+
+        function toggleRecommendationCard(id) {
+            const target = document.getElementById(id);
+            if (!target) return;
+
+            // 한 번에 하나의 추천 결과만 펼쳐지도록 처리
+            document.querySelectorAll('#latest-recommendation-results [id^="rec-"]').forEach(panel => {
+                if (panel.id === id) return;
+                panel.classList.add('hidden');
+                const otherIcon = document.getElementById(panel.id + '-icon');
+                if (otherIcon) otherIcon.setAttribute('data-lucide', 'chevron-down');
+            });
+
+            target.classList.toggle('hidden');
+            const icon = document.getElementById(id + '-icon');
+            if (icon) {
+                icon.setAttribute('data-lucide', target.classList.contains('hidden') ? 'chevron-down' : 'chevron-up');
+            }
+            lucide.createIcons();
+        }
+
+        function renderRoadmap(jobId) {
+            const job = jobRoadmaps[jobId] || jobRoadmaps['kakao-backend'];
+            document.getElementById('roadmap-title').innerHTML =
+                `<i data-lucide="git-fork" class="w-5 h-5 text-brand-accent"></i>${job.role} 커리어 로드맵`;
+            document.getElementById('roadmap-subtitle').textContent =
+                `${job.company} 채용공고에 맞춰 현재 역량과 보완 과제를 정리합니다.`;
+            document.getElementById('roadmap-target').textContent = `목표 직무 · ${job.role}`;
+            document.getElementById('roadmap-score').textContent = `매칭 ${job.score}점`;
+
+            document.getElementById('roadmap-strengths').innerHTML = job.strengths.map(x =>
+                `<li class="flex gap-2"><i data-lucide="check" class="w-4 h-4 text-brand-accent shrink-0"></i>${x}</li>`).join('');
+            document.getElementById('roadmap-gaps').innerHTML = job.gaps.map(x =>
+                `<li class="flex gap-2"><i data-lucide="arrow-up-right" class="w-4 h-4 text-amber-400 shrink-0"></i>${x}</li>`).join('');
+            document.getElementById('roadmap-curriculum').innerHTML = job.curriculum.map((x, i) => {
+                const route = getClassRoute(i);
+                const selected = i === selectedCurriculumIndex;
+                return `
+                <button type="button" onclick="selectCurriculum(${i})" data-curriculum-index="${i}"
+                    class="roadmap-curriculum-card text-left p-4 bg-slate-900/80 rounded-xl border ${selected ? 'border-brand-accent ring-1 ring-brand-accent/30' : 'border-brand-border'} hover:border-brand-accent/70 transition space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="curriculum-period text-[10px] px-2 py-1 ${selected ? 'bg-brand-accent text-slate-950' : 'bg-slate-800 text-brand-accent'} rounded font-bold">${x[0]}</span>
+                        <span class="curriculum-status text-[10px] ${selected ? 'text-brand-accent font-bold' : 'text-slate-400'}">${selected ? '선택됨' : '선택하기'}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="curriculum-class-icon w-11 h-11 rounded-xl border ${route.border} ${route.bg} ${route.text} flex items-center justify-center shrink-0" title="${route.className} 루트"><i data-lucide="${route.icon}" class="w-5 h-5"></i></div>
+                        <div><div class="text-[10px] font-black tracking-wider ${route.text}">${route.className.toUpperCase()} ROUTE</div><h4 class="font-bold text-white text-sm mt-0.5">${x[1]}</h4></div>
+                    </div>
+                    <p class="text-xs text-slate-400 leading-relaxed">${x[2]}</p>
+                    <div class="text-[11px] text-slate-300">${x[3]}</div>
+                </button>`;
+            }).join('');
+            updateCurriculumSelection();
+            lucide.createIcons();
+        }
+
+        function updatePinnedMatchingReport(jobId) {
+            const job = jobRoadmaps[jobId] || jobRoadmaps['kakao-backend'];
+            pinnedJobId = jobId;
+            const score = job.score;
+
+            // Home report
+            const home = document.getElementById('view-dashboard');
+            if (home) {
+                const target = home.querySelector('.md\\:col-span-7 .text-xs.px-2\\.5');
+                if (target) target.textContent = `타겟 공고: ${job.company} ${job.role.replace(' 개발자','')}`;
+                const scoreText = home.querySelector('.md\\:col-span-7 .text-3xl');
+                if (scoreText) scoreText.innerHTML = `${score}<span class="text-sm font-bold text-brand-accent">점</span>`;
+                const scoreStrong = home.querySelector('.md\\:col-span-7 p strong.text-brand-accent');
+                if (scoreStrong) scoreStrong.textContent = `${score}점`;
+                const progress = home.querySelector('.md\\:col-span-7 path.text-brand-accent');
+                if (progress) progress.setAttribute('stroke-dasharray', `${score}, 100`);
+                const report = home.querySelector('.md\\:col-span-7 .text-slate-300.leading-relaxed');
+                if (report) report.innerHTML = `${job.company} ${job.role} 공고와 당신의 매칭 점수는 <strong class="text-brand-accent font-bold text-base">${score}점</strong>입니다. 선택한 공고의 요구 역량을 기준으로 로드맵을 연결했습니다.`;
+            }
+
+            // Recommendation pinned report
+            const rec = document.getElementById('view-recommendation');
+            if (rec) {
+                const target = rec.querySelector('section.relative .text-xs.px-2\\.5');
+                if (target) target.textContent = `타겟 공고: ${job.company} ${job.role}`;
+                const scoreText = rec.querySelector('section.relative .text-2xl');
+                if (scoreText) scoreText.innerHTML = `${score}<span class="text-xs text-brand-accent">점</span>`;
+                const progress = rec.querySelector('section.relative path.text-brand-accent');
+                if (progress) progress.setAttribute('stroke-dasharray', `${score}, 100`);
+                const recStrong = rec.querySelector('section.relative .text-base.text-brand-accent');
+                if (recStrong) recStrong.textContent = `${score}점`;
+            }
+        }
+
+        let selectedCurriculumIndex = 0;
+        let currentClassRouteIndex = null;
+        let pendingClassRouteIndex = null;
+
+        const classRoutes = {
+            0: { className: '전사', icon: 'sword', text: 'text-rose-300', border: 'border-rose-400/30', bg: 'bg-rose-400/10' },
+            1: { className: '성직자', icon: 'cross', text: 'text-sky-300', border: 'border-sky-400/30', bg: 'bg-sky-400/10' },
+            2: { className: '마법사', icon: 'wand-2', text: 'text-violet-300', border: 'border-violet-400/30', bg: 'bg-violet-400/10' }
+        };
+        function getClassRoute(index) { return classRoutes[index] || classRoutes[0]; }
+
+        function updateCurriculumSelection() {
+            document.querySelectorAll('.roadmap-curriculum-card').forEach((card, index) => {
+                const selected = index === selectedCurriculumIndex;
+                card.classList.toggle('border-brand-accent', selected);
+                card.classList.toggle('ring-1', selected);
+                card.classList.toggle('ring-brand-accent/30', selected);
+                card.classList.toggle('border-brand-border', !selected);
+
+                const period = card.querySelector('.curriculum-period');
+                const status = card.querySelector('.curriculum-status');
+                if (period) {
+                    period.classList.toggle('bg-brand-accent', selected);
+                    period.classList.toggle('text-slate-950', selected);
+                    period.classList.toggle('bg-slate-800', !selected);
+                    period.classList.toggle('text-brand-accent', !selected);
+                }
+                if (status) {
+                    status.textContent = selected ? '선택됨' : '선택하기';
+                    status.classList.toggle('text-brand-accent', selected);
+                    status.classList.toggle('font-bold', selected);
+                    status.classList.toggle('text-slate-400', !selected);
+                }
+            });
+        }
+
+        function selectCurriculum(index) {
+            const job = jobRoadmaps[pinnedJobId] || jobRoadmaps['kakao-backend'];
+            if (!job.curriculum[index]) return;
+            if (currentClassRouteIndex === index) {
+                selectedCurriculumIndex = index; updateCurriculumSelection(); renderHomeAdventure();
+                showToast(`이미 ${getClassRoute(index).className} 루트를 진행 중입니다.`); return;
+            }
+            pendingClassRouteIndex = index;
+            const route = getClassRoute(index);
+            const item = job.curriculum[index];
+            const message = currentClassRouteIndex === null
+                ? `${item[0]} 루트를 고르셨습니다. 이대로 전직하시겠습니까?`
+                : `이미 ${getClassRoute(currentClassRouteIndex).className} 루트를 진행중입니다. 다른 루트 선택시 진행상황이 초기화됩니다. 진행합니까?`;
+            openClassChangeModal(message, route);
+        }
+
+        function openClassChangeModal(message, route) {
+            const modal = document.getElementById('class-change-modal');
+            if (!modal) return;
+            document.getElementById('class-change-message').textContent = message;
+            document.getElementById('class-change-icon').setAttribute('data-lucide', route.icon);
+            document.getElementById('class-change-icon-wrap').className = `p-2.5 rounded-xl ${route.bg} ${route.text} shrink-0`;
+            modal.classList.remove('hidden'); modal.classList.add('flex'); lucide.createIcons();
+        }
+        function closeClassChangeModal() {
+            const modal = document.getElementById('class-change-modal');
+            if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); }
+            pendingClassRouteIndex = null;
+        }
+        function confirmClassChange() {
+            if (pendingClassRouteIndex === null) return;
+            const index = pendingClassRouteIndex;
+            const route = getClassRoute(index);
+            const wasChanging = currentClassRouteIndex !== null && currentClassRouteIndex !== index;
+            currentClassRouteIndex = index; selectedCurriculumIndex = index;
+            updateCurriculumSelection(); closeClassChangeModal();
+            if (wasChanging) { delete adventureStates[pinnedJobId + ':' + index]; persistAdventure(); }
+            renderHomeAdventure(); updateAdventureClass(route);
+            showToast(wasChanging ? `${route.className} 루트로 전직했습니다. 기존 진행상황이 초기화되었습니다.` : `${route.className} 루트로 전직했습니다.`);
+        }
+        function updateAdventureClass(route) {
+            const cls = document.getElementById('adventure-class'); if (cls) cls.textContent = route.className;
+        }
+
+        function openJobRoadmap(jobId) {
+            updatePinnedMatchingReport(jobId);
+            renderRoadmap(jobId);
+            switchNavTab('roadmap');
+            renderHomeAdventure();
+            showToast(`${jobRoadmaps[jobId].company} ${jobRoadmaps[jobId].role} 로드맵을 불러왔습니다.`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePinnedMatchingReport(pinnedJobId);
+            renderRoadmap(pinnedJobId);
+            renderHomeAdventure();
+        });
+
+        // Toast Notification Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-text');
+            toastText.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
