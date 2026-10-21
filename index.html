@@ -8,6 +8,15 @@
     
 <style>
  .job-preference-option{cursor:pointer;display:block;position:relative}.job-preference-option span{position:relative;display:flex;align-items:center;justify-content:center;min-height:48px;padding:.65rem 2.1rem .65rem .5rem;border:1px solid rgba(51,65,85,.9);border-radius:.65rem;background:rgba(15,23,42,.72);color:rgb(203 213 225);font-size:.75rem;font-weight:600;text-align:center;transition:all .18s ease}.job-preference-option:hover span{border-color:rgba(79,209,197,.45);color:white;background:rgba(30,41,59,.9)}.job-preference-option.is-selected span{border-color:#4FD1C5;background:rgba(79,209,197,.14);color:#4FD1C5;box-shadow:0 0 0 1px rgba(79,209,197,.16)}.job-preference-rank{position:absolute;right:.45rem;top:.4rem;width:1.35rem;height:1.35rem;border-radius:9999px;display:none;align-items:center;justify-content:center;background:#4FD1C5;color:#0B0F19;font-size:.65rem;font-weight:900;z-index:2}.job-preference-option.is-selected .job-preference-rank{display:flex}
+
+#spec-survey{width:min(580px,calc(100vw - 28px));max-height:90dvh;overflow:auto;margin:auto;border:1px solid #2A364F;border-radius:24px;padding:28px;background:#111827;color:#e2e8f0;box-shadow:0 24px 100px #0008}
+#spec-survey::backdrop{background:#020617c9;backdrop-filter:blur(6px)}
+#spec-survey [hidden]{display:none!important}#spec-survey h2{font-size:22px;font-weight:800;line-height:1.45;margin:10px 0 22px}
+#spec-survey .survey-field{display:block;width:100%;padding:13px;border:1px solid #2A364F;border-radius:12px;background:#0b0f19;color:#fff;margin-top:12px}#spec-survey .survey-field:focus{outline:2px solid #4fd1c5;outline-offset:2px}
+#spec-survey button{padding:12px 17px;border-radius:12px;font-weight:700;background:#243146;color:#e2e8f0}#spec-survey button.primary{background:#4fd1c5;color:#0b0f19}#spec-survey button:disabled{opacity:.5;cursor:wait}
+#survey-job-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:16px}#survey-job-options input:focus-visible+span{outline:2px solid #4fd1c5;outline-offset:2px}
+#spec-survey .survey-help{font-size:14px;line-height:1.8;color:#94a3b8}#survey-error{font-size:13px;color:#fda4af;min-height:24px;margin:16px 0 8px;overflow-wrap:anywhere}
+#spec-survey dl{display:grid;grid-template-columns:80px minmax(0,1fr);gap:14px;font-size:14px}#spec-survey dt{color:#94a3b8}#spec-survey dd{overflow-wrap:anywhere}#survey-finish{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons CDN -->
@@ -556,6 +565,24 @@
         <span id="toast-text">알림 메세지</span>
     </div>
 
+
+    <dialog id="spec-survey" aria-labelledby="survey-title" aria-describedby="survey-progress">
+        <p id="survey-progress" style="font-size:12px;font-weight:700;color:#4fd1c5" aria-live="polite"></p>
+        <h2 id="survey-title" tabindex="-1"></h2>
+        <section data-survey-step="-1"><p class="survey-help">등록된 마이페이지 정보가 없습니다. 간단한 설문조사 이후 직무추천을 받아보세요!</p><p class="survey-help" style="margin-top:12px">5개의 짧은 질문으로 시작해요. 입력한 정보는 마지막 단계에서 저장되며, 이후 마이페이지에서 수정할 수 있어요.</p></section>
+        <section data-survey-step="0" hidden><label for="survey-grade">현재 학년</label><select id="survey-grade" class="survey-field" required><option value="">학년을 선택해주세요</option><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option><option value="4">4학년</option></select></section>
+        <section data-survey-step="1" hidden><label for="survey-gpa">평균 학점 (4.5 만점)</label><input id="survey-gpa" class="survey-field" type="number" required min="0" max="4.5" step="any" placeholder="예: 3.8" inputmode="decimal"></section>
+        <section data-survey-step="2" hidden><label for="survey-stack">보유 기술 스택</label><input id="survey-stack" class="survey-field" placeholder="예: Java, Python, SQL"><p class="survey-help">쉼표로 구분해주세요. 아직 없으면 비워두고 다음으로 넘어가도 돼요.</p></section>
+        <section data-survey-step="3" hidden><label for="survey-certificates">보유 자격증</label><input id="survey-certificates" class="survey-field" placeholder="예: 정보처리기사, SQLD"><p class="survey-help">쉼표로 구분해주세요. 없으면 비워두셔도 돼요.</p></section>
+        <section data-survey-step="4" hidden><p class="survey-help">1~3개를 선택해주세요. 선택한 순서가 선호 순위가 됩니다.</p><div id="survey-job-options" role="group" aria-label="선호직무"></div></section>
+        <section data-survey-step="5" hidden><dl><dt>학년</dt><dd id="survey-review-grade"></dd><dt>GPA</dt><dd id="survey-review-gpa"></dd><dt>기술 스택</dt><dd id="survey-review-stack"></dd><dt>자격증</dt><dd id="survey-review-certificates"></dd><dt>선호직무</dt><dd id="survey-review-jobs"></dd></dl><p class="survey-help" style="margin-top:18px">아래 버튼을 누르면 입력한 정보가 저장됩니다.</p></section>
+        <p id="survey-error" role="status" aria-live="polite"></p>
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+            <button id="survey-prev" type="button" hidden onclick="previousSurveyStep()">이전</button>
+            <button id="survey-next" type="button" class="primary" onclick="nextSurveyStep()">확인</button>
+            <div id="survey-finish" hidden><button type="button" class="primary" onclick="finishSpecSurvey(true)">직무추천 받기</button><button type="button" onclick="finishSpecSurvey(false)">조금더 둘러보기</button></div>
+        </div>
+    </dialog>
     <script>
         // Auth tokens stay in memory. Reload always opens the signed-out screen.
         const SUPABASE_URL = 'https://rrfydzmsjwfgxfynfqys.supabase.co';
@@ -777,6 +804,7 @@
             document.querySelectorAll('input[name="preferred-job"]').forEach(input => input.disabled = busy || !myPageReady);
         }
         function clearMyPageState() {
+            resetSpecSurvey();
             myPageEpoch++;
             myPageUserId = null; myPageAuthId = null; myPageReady = false;
             preferredJobCodes = [];
@@ -834,6 +862,7 @@
             myPageAuthId = user.id;
             setMyPageBusy(true);
             myPageStatus('저장된 회원정보를 불러오는 중입니다…');
+            let needsSurvey = false;
             try {
                 const [member, catalog] = await Promise.all([
                     authClient.from('SC_USERS').select('USER_ID').eq('AUTH_USER_ID', user.id).single(),
@@ -852,6 +881,7 @@
                 if (preferences.error) throw preferences.error;
                 if (epoch !== myPageEpoch) return;
                 const saved = spec.data;
+                needsSurvey = saved === null;
                 const skills = listForInput(saved?.SPEC_TECH_SKILL);
                 const licenses = listForInput(saved?.SPEC_LICENSES);
                 const choices = preferences.data || [];
@@ -871,7 +901,10 @@
                 myPageStatus('불러오기 실패: ' + myPageError(error), true);
                 document.getElementById('mypage-retry').hidden = false;
             } finally {
-                if (epoch === myPageEpoch) setMyPageBusy(false);
+                if (epoch === myPageEpoch) {
+                    setMyPageBusy(false);
+                    if (myPageReady && needsSurvey) openSpecSurvey();
+                }
             }
         }
         async function retryMyPageLoad() {
@@ -913,6 +946,7 @@
                 if (!data?.saved || data.user_id !== userId) throw new Error('저장 완료 응답을 확인하지 못했습니다. 다시 불러오기로 확인해주세요.');
                 myPageStatus('회원 스펙과 선호직무가 저장되었습니다.');
                 showToast('저장되었습니다.');
+                return true;
             } catch (error) {
                 if (epoch !== myPageEpoch) return;
                 myPageStatus('저장 실패: ' + myPageError(error), true);
@@ -921,6 +955,125 @@
                 if (epoch === myPageEpoch) setMyPageBusy(false);
             }
         }
+        // First-login spec survey; only open after a successful own-profile lookup.
+        let surveyStep = -1;
+        let surveyBusy = false;
+        let surveyJobs = [];
+        let surveyEpoch = null;
+        const surveyDialog = () => document.getElementById('spec-survey');
+
+        function resetSpecSurvey() {
+            surveyDialog()?.close();
+            surveyBusy = false; surveyStep = -1; surveyJobs = []; surveyEpoch = null;
+        }
+        function openSpecSurvey() {
+            if (!myPageReady || myPageBusy || surveyDialog().open) return;
+            surveyEpoch = myPageEpoch;
+            surveyStep = -1;
+            surveyJobs = [...preferredJobCodes];
+            ['grade', 'gpa', 'stack', 'certificates'].forEach(key => {
+                document.getElementById('survey-' + key).value = document.getElementById('input-' + key).value;
+            });
+            const container = document.getElementById('survey-job-options');
+            container.replaceChildren();
+            jobCatalog.forEach(job => {
+                const label = document.createElement('label'); label.className = 'job-preference-option';
+                const input = document.createElement('input');
+                input.type = 'checkbox'; input.value = job.JOB_CODE; input.className = 'sr-only';
+                const span = document.createElement('span'); span.textContent = job.JOB_NAME;
+                const rank = document.createElement('b'); rank.className = 'job-preference-rank';
+                rank.setAttribute('aria-hidden', 'true');
+                input.addEventListener('change', () => {
+                    if (input.checked && !surveyJobs.includes(input.value)) {
+                        if (surveyJobs.length >= 3) surveyError('선호직무는 최대 3개까지 선택할 수 있어요.');
+                        else { surveyJobs.push(input.value); surveyError(''); }
+                    } else if (!input.checked) { surveyJobs = surveyJobs.filter(code => code !== input.value); surveyError(''); }
+                    syncSurveyJobs();
+                });
+                span.append(rank); label.append(input, span); container.append(label);
+            });
+            syncSurveyJobs(); renderSurveyStep(); surveyDialog().showModal();
+            document.getElementById('survey-next').focus();
+        }
+        function syncSurveyJobs() {
+            document.querySelectorAll('#survey-job-options input').forEach(input => {
+                const index = surveyJobs.indexOf(input.value);
+                input.checked = index >= 0;
+                input.closest('label').classList.toggle('is-selected', index >= 0);
+                input.closest('label').querySelector('b').textContent = index >= 0 ? String(index + 1) : '';
+            });
+        }
+        function surveyError(message) {
+            document.getElementById('survey-error').textContent = message;
+        }
+        function renderSurveyStep() {
+            const titles = ['현재 몇 학년인가요?', '현재 GPA를 알려주세요.', '사용할 수 있는 기술은 무엇인가요?', '보유한 자격증이 있나요?', '어떤 직무에 관심이 있나요?', '입력한 정보를 확인해주세요.'];
+            document.getElementById('survey-title').textContent = surveyStep < 0 ? '나에게 맞는 커리어의 첫걸음' : titles[surveyStep];
+            document.getElementById('survey-progress').textContent = surveyStep < 0 ? '시작하기' : surveyStep === 5 ? '설문 완료 · 저장 전 확인' : `${surveyStep + 1} / 5`;
+            document.querySelectorAll('[data-survey-step]').forEach(panel => panel.hidden = Number(panel.dataset.surveyStep) !== surveyStep);
+            document.getElementById('survey-prev').hidden = surveyStep < 1;
+            document.getElementById('survey-next').hidden = surveyStep === 5;
+            document.getElementById('survey-next').textContent = surveyStep < 0 ? '확인' : surveyStep === 4 ? '입력 내용 확인' : '다음';
+            document.getElementById('survey-finish').hidden = surveyStep !== 5;
+            surveyError('');
+            if (surveyStep === 5) {
+                const values = {
+                    grade: document.getElementById('survey-grade').value + '학년',
+                    gpa: document.getElementById('survey-gpa').value + ' / 4.5',
+                    stack: document.getElementById('survey-stack').value.trim() || '없음',
+                    certificates: document.getElementById('survey-certificates').value.trim() || '없음',
+                    jobs: surveyJobs.map((code, i) => `${i + 1}순위 ${jobCatalog.find(job => job.JOB_CODE === code).JOB_NAME}`).join(' · ')
+                };
+                Object.entries(values).forEach(([key, value]) => document.getElementById('survey-review-' + key).textContent = value);
+            }
+            const panel = document.querySelector(`[data-survey-step="${surveyStep}"]`);
+            panel?.querySelector('input,select')?.focus();
+        }
+        function nextSurveyStep() {
+            if (surveyBusy) return;
+            if (surveyStep === 0 && !document.getElementById('survey-grade').reportValidity()) return;
+            if (surveyStep === 1 && !document.getElementById('survey-gpa').reportValidity()) return;
+            if (surveyStep === 4 && !surveyJobs.length) { surveyError('관심 있는 직무를 1개 이상 선택해주세요.'); return; }
+            surveyStep = Math.min(5, surveyStep + 1); renderSurveyStep();
+        }
+        function previousSurveyStep() {
+            if (surveyBusy) return;
+            surveyStep = Math.max(0, surveyStep - 1); renderSurveyStep();
+        }
+        async function finishSpecSurvey(recommend) {
+            if (surveyBusy || surveyStep !== 5 || surveyEpoch !== myPageEpoch || !myPageReady) return;
+            const epoch = surveyEpoch;
+            surveyBusy = true;
+            const controls = [...surveyDialog().querySelectorAll('button,input,select')];
+            controls.forEach(input => input.disabled = true);
+            surveyError('저장 중입니다…');
+            ['grade', 'gpa', 'stack', 'certificates'].forEach(key => {
+                document.getElementById('input-' + key).value = document.getElementById('survey-' + key).value;
+            });
+            preferredJobCodes = [...surveyJobs]; syncPreferredJobRanks();
+            try {
+                const saved = await saveMyPageInfo();
+                if (epoch !== myPageEpoch) return;
+                if (!saved) { surveyError('저장하지 못했습니다. ' + document.getElementById('mypage-status').textContent + ' 다시 시도해주세요.'); return; }
+                surveyDialog().close();
+                if (recommend) switchNavTab('recommendation');
+            } catch (error) {
+                if (epoch === myPageEpoch) surveyError('저장하지 못했습니다. ' + myPageError(error));
+            } finally {
+                // Always release controls, including after a logout or account change.
+                controls.forEach(input => input.disabled = false);
+                if (epoch === myPageEpoch) surveyBusy = false;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            surveyDialog().addEventListener('cancel', event => { if (surveyBusy) event.preventDefault(); });
+            surveyDialog().addEventListener('keydown', event => {
+                if (event.key === 'Enter' && ['INPUT', 'SELECT'].includes(event.target.tagName)) {
+                    event.preventDefault(); nextSurveyStep();
+                }
+            });
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('job-preference-options').addEventListener('change', event => {
                 if (event.target.matches('input[name="preferred-job"]')) handlePreferredJobChange(event.target);
