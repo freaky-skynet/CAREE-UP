@@ -837,6 +837,9 @@
             syncPreferredJobRanks();
         }
         function renderJobCatalog(rows) {
+            const displayOrder = ['FE', 'BE', 'APP', 'ERP', 'OPS', 'SEC', 'DATA', 'AIML', 'QA', 'GAME', 'IOT', 'NET', 'ETC'];
+            const rank = code => code === 'ETC' ? 1000 : displayOrder.includes(code) ? displayOrder.indexOf(code) : 999;
+            rows = [...rows].sort((a, b) => rank(a.JOB_CODE) - rank(b.JOB_CODE));
             jobCatalog = rows;
             const container = document.getElementById('job-preference-options');
             container.replaceChildren();
